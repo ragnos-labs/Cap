@@ -101,7 +101,11 @@ export const authOptions = (): NextAuthOptions => {
 						return crypto.randomInt(100000, 1000000).toString();
 					},
 					async sendVerificationRequest({ identifier, token }) {
-						if (!serverEnv().RESEND_API_KEY) {
+						const env = serverEnv();
+						const smtpConfigured = Boolean(
+							env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASSWORD,
+						);
+						if (!env.RESEND_API_KEY && !smtpConfigured) {
 							console.log("\n");
 							console.log(
 								"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
