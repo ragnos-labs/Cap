@@ -17,13 +17,13 @@ services:
       DATABASE_ENCRYPTION_KEY: ${DATABASE_ENCRYPTION_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789}
       MEDIA_SERVER_WEBHOOK_SECRET: ${MEDIA_SERVER_WEBHOOK_SECRET:-fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210}
-      CAP_AWS_ACCESS_KEY: ${MINIO_ROOT_USER:-cap-admin}
-      CAP_AWS_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-cap-minio-pwd-456}
-      CAP_AWS_BUCKET: cap
-      CAP_AWS_REGION: us-east-1
-      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_URL:-http://localhost:9000}
-      S3_INTERNAL_ENDPOINT: http://minio:9000
-      S3_PATH_STYLE: "true"
+      # Storage: real AWS S3 (see .env). Revert to local MinIO with: git checkout docker-compose.yml
+      CAP_AWS_ACCESS_KEY: ${CAP_AWS_ACCESS_KEY:?set CAP_AWS_ACCESS_KEY in .env}
+      CAP_AWS_SECRET_KEY: ${CAP_AWS_SECRET_KEY:?set CAP_AWS_SECRET_KEY in .env}
+      CAP_AWS_BUCKET: ${CAP_AWS_BUCKET:-ragnos-cap-recordings-dev-886436964384}
+      CAP_AWS_REGION: ${CAP_AWS_REGION:-us-east-1}
+      # No S3_*_ENDPOINT overrides => AWS SDK uses the real S3 endpoint (virtual-host style)
+      S3_PATH_STYLE: "false"
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_FROM_DOMAIN: ${RESEND_FROM_DOMAIN:-}
       MEDIA_SERVER_URL: http://media-server:3456
