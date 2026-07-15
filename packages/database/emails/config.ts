@@ -1,9 +1,27 @@
 import { buildEnv, serverEnv } from "@cap/env";
+import { render } from "@react-email/render";
+import nodemailer from "nodemailer";
 import type { JSXElementConstructor, ReactElement } from "react";
 import { Resend } from "resend";
 
 export const resend = () =>
 	serverEnv().RESEND_API_KEY ? new Resend(serverEnv().RESEND_API_KEY) : null;
+
+let smtpTransport: nodemailer.Transporter | null = null;
+
+const smtp = () => {
+	const env = serverEnv();
+	if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASSWORD) return null;
+	if (!smtpTransport) {
+		smtpTransport = nodemailer.createTransport({
+			host: env.SMTP_HOST,
+			port: Number(env.SMTP_PORT || 587),
+			secure: Number(env.SMTP_PORT || 587) === 465,
+			auth: { user: env.SMTP_USER, pass: env.SMTP_PASSWORD },
+		});
+	}
+	return smtpTransport;
+};
 
 export const sendEmail = async ({
 	email,
@@ -26,19 +44,34 @@ export const sendEmail = async ({
 	replyTo?: string;
 	fromOverride?: string;
 }) => {
-	const r = resend();
-	if (!r) {
-		return Promise.resolve();
-	}
-
 	if (marketing && !buildEnv.NEXT_PUBLIC_IS_CAP) return;
-	let from: string;
 
+	let from: string;
 	if (fromOverride) from = fromOverride;
 	else if (marketing) from = "Richie from Cap <richie@send.cap.so>";
 	else if (buildEnv.NEXT_PUBLIC_IS_CAP)
 		from = "Cap Auth <no-reply@auth.cap.so>";
-	else from = `auth@${serverEnv().RESEND_FROM_DOMAIN}`;
+	else from = serverEnv().SMTP_FROM ?? `auth@${serverEnv().RESEND_FROM_DOMAIN}`;
+
+	const transport = smtp();
+	if (transport) {
+		// SMTP path (e.g. AWS SES). scheduledAt is Resend-only and ignored here.
+		const html = await render(react);
+		await transport.sendMail({
+			from,
+			to: test ? "delivered@resend.dev" : email,
+			subject,
+			html,
+			cc: test ? undefined : cc,
+			replyTo,
+		});
+		return;
+	}
+
+	const r = resend();
+	if (!r) {
+		return Promise.resolve();
+	}
 
 	return r.emails.send({
 		from,
