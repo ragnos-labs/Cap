@@ -35,6 +35,10 @@ import {
 } from "@/lib/media-client";
 import { runPromise } from "@/lib/server";
 import { type DeepgramResult, formatToWebVTT } from "@/lib/transcribe-utils";
+import {
+	transcribeWithOpenAiCompatible,
+	transcriptionConfigured,
+} from "@/lib/transcription/openai-compatible";
 import { decodeStorageVideo } from "@/lib/video-storage";
 
 interface TranscribeWorkflowPayload {
@@ -76,7 +80,7 @@ export async function transcribeVideoWorkflow(
 		}
 
 		const [transcription] = await Promise.all([
-			transcribeWithDeepgram(audioUrl, videoData.aiGenerationLanguage),
+			transcribeWithProvider(audioUrl, videoData.aiGenerationLanguage),
 		]);
 
 		await saveTranscription(videoId, userId, videoData.video, transcription);
@@ -98,8 +102,10 @@ export async function transcribeVideoWorkflow(
 async function validateVideo(videoId: string): Promise<VideoData> {
 	"use step";
 
-	if (!serverEnv().DEEPGRAM_API_KEY) {
-		throw new FatalError("Missing DEEPGRAM_API_KEY");
+	if (!transcriptionConfigured(serverEnv())) {
+		throw new FatalError(
+			"Missing transcription provider (set DEEPGRAM_API_KEY or TRANSCRIPTION_URL)",
+		);
 	}
 
 	const query = await db()
@@ -322,6 +328,29 @@ export function getDeepgramTranscriptionOptions(
 		...baseOptions,
 		language,
 	};
+}
+
+async function transcribeWithProvider(
+	audioUrl: string,
+	language: AiGenerationLanguage,
+): Promise<string> {
+	"use step";
+
+	const transcriptionUrl = serverEnv().TRANSCRIPTION_URL;
+	if (!transcriptionUrl) return transcribeWithDeepgram(audioUrl, language);
+
+	const audioResponse = await fetch(audioUrl);
+	if (!audioResponse.ok) {
+		throw new Error(
+			`Audio URL not accessible: ${audioResponse.status} ${audioResponse.statusText}`,
+		);
+	}
+	const audio = new Uint8Array(await audioResponse.arrayBuffer());
+	return transcribeWithOpenAiCompatible(audio, {
+		url: transcriptionUrl,
+		model: serverEnv().TRANSCRIPTION_MODEL,
+		language,
+	});
 }
 
 async function transcribeWithDeepgram(
