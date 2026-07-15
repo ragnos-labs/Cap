@@ -1,0 +1,136 @@
+name: cap-selfhost
+
+services:
+  cap-web:
+    container_name: cap-web
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_WEB_URL: ${CAP_URL:?set CAP_URL in .env}
+    image: cap-web:ragnos
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql://cap:${MYSQL_PASSWORD:?}@mysql:3306/cap
+      WEB_URL: ${CAP_URL}
+      NEXTAUTH_URL: ${CAP_URL}
+      DATABASE_ENCRYPTION_KEY: ${DATABASE_ENCRYPTION_KEY:?}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?}
+      MEDIA_SERVER_WEBHOOK_SECRET: ${MEDIA_SERVER_WEBHOOK_SECRET:?}
+      CAP_AWS_ACCESS_KEY: ${CAP_AWS_ACCESS_KEY:?}
+      CAP_AWS_SECRET_KEY: ${CAP_AWS_SECRET_KEY:?}
+      CAP_AWS_BUCKET: ${CAP_AWS_BUCKET:?}
+      CAP_AWS_REGION: ${CAP_AWS_REGION:-us-east-1}
+      S3_PATH_STYLE: "false"
+      CAP_ALLOWED_SIGNUP_DOMAINS: ${CAP_ALLOWED_SIGNUP_DOMAINS:?}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      RESEND_FROM_DOMAIN: ${RESEND_FROM_DOMAIN:-ragnos.io}
+      TRANSCRIPTION_URL: http://whisper:8080/inference
+      TRANSCRIPTION_MODEL: small.en
+      OPENAI_BASE_URL: http://ollama:11434/v1
+      OPENAI_MODEL: ${OPENAI_MODEL:-qwen2.5:14b-instruct-q4_K_M}
+      OPENAI_API_KEY: local-ollama
+      MEDIA_SERVER_URL: http://media-server:3456
+      MEDIA_SERVER_WEBHOOK_URL: http://cap-web:3000
+    expose: ["3000"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks: [cap-network]
+
+  media-server:
+    container_name: cap-media-server
+    build:
+      context: ./apps/media-server
+      dockerfile: Dockerfile.standalone
+    restart: unless-stopped
+    environment:
+      PORT: 3456
+      MEDIA_SERVER_WEBHOOK_SECRET: ${MEDIA_SERVER_WEBHOOK_SECRET:?}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3456/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks: [cap-network]
+
+  mysql:
+    container_name: cap-mysql
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: cap
+      MYSQL_USER: cap
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?}
+    command:
+      - --max_connections=1000
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - cap-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "cap", "-p${MYSQL_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks: [cap-network]
+
+  whisper:
+    container_name: cap-whisper
+    build:
+      context: ./infra/whisper
+    restart: unless-stopped
+    volumes:
+      - cap-whisper-models:/models
+    expose: ["8080"]
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "-o", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks: [cap-network]
+
+  ollama:
+    container_name: cap-ollama
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - cap-ollama-models:/root/.ollama
+    expose: ["11434"]
+    networks: [cap-network]
+
+  cloudflared:
+    container_name: cap-tunnel
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --metrics 0.0.0.0:2000 run --token ${CLOUDFLARED_TOKEN:?}
+    ports:
+      - "127.0.0.1:2000:2000"
+    depends_on:
+      cap-web:
+        condition: service_healthy
+    networks: [cap-network]
+
+volumes:
+  cap-mysql-data:
+  cap-whisper-models:
+  cap-ollama-models:
+
+networks:
+  cap-network:
+    driver: bridge
