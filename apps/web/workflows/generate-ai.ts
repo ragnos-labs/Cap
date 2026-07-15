@@ -14,6 +14,7 @@ import { and, eq } from "drizzle-orm";
 import { Effect, Option } from "effect";
 import { FatalError } from "workflow";
 import { GROQ_MODEL, getGroqClient } from "@/lib/groq-client";
+import { openAiChatModel, openAiChatUrl } from "@/lib/openai-chat-config";
 import { runPromise } from "@/lib/server";
 import { decodeStorageVideo } from "@/lib/video-storage";
 
@@ -430,14 +431,14 @@ async function callAiApi(
 }
 
 async function callOpenAi(prompt: string): Promise<string> {
-	const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+	const aiRes = await fetch(openAiChatUrl(serverEnv()), {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
 			Authorization: `Bearer ${serverEnv().OPENAI_API_KEY}`,
 		},
 		body: JSON.stringify({
-			model: "gpt-4o-mini",
+			model: openAiChatModel(serverEnv()),
 			messages: [{ role: "user", content: prompt }],
 		}),
 	});
