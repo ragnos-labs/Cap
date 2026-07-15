@@ -3,7 +3,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential cmake git ca-certificates && rm -rf /var/lib/apt/lists/*
 RUN git clone --depth 1 https://github.com/ggml-org/whisper.cpp /src
 WORKDIR /src
-RUN cmake -B build -DCMAKE_BUILD_TYPE=Release && \
+RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF && \
     cmake --build build -j --target whisper-server
 
 FROM debian:bookworm-slim
