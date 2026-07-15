@@ -251,59 +251,64 @@ export async function generateMetadata(
 						buildEnv.NEXT_PUBLIC_WEB_URL,
 					).toString();
 
+					// With og:video present, some messengers (e.g. iMessage) render a
+					// black video-player card instead of the thumbnail. Setting
+					// OG_VIDEO_DISABLED=true serves image-only previews.
+					const ogVideoDisabled = serverEnv().OG_VIDEO_DISABLED === "true";
+					const previewImages = [
+						{
+							url: previewImageUrl,
+							width: 480,
+							height: 270,
+							type: "image/gif",
+						},
+						{
+							url: ogImageUrl,
+							width: 1200,
+							height: 630,
+						},
+					];
+
 					return {
 						title: `${video.name} | Cap Recording`,
 						description: "Watch this video on Cap",
 						openGraph: {
-							images: [
-								{
-									url: previewImageUrl,
-									width: 480,
-									height: 270,
-									type: "image/gif",
-								},
-								{
-									url: ogImageUrl,
-									width: 1200,
-									height: 630,
-								},
-							],
-							videos: [
-								{
-									url: playlistUrl,
-									width: 1280,
-									height: 720,
-									type: "video/mp4",
-								},
-							],
+							images: previewImages,
+							...(ogVideoDisabled
+								? {}
+								: {
+										videos: [
+											{
+												url: playlistUrl,
+												width: 1280,
+												height: 720,
+												type: "video/mp4",
+											},
+										],
+									}),
 						},
-						twitter: {
-							card: "player",
-							title: `${video.name} | Cap Recording`,
-							description: "Watch this video on Cap",
-							images: [
-								{
-									url: previewImageUrl,
-									width: 480,
-									height: 270,
-									type: "image/gif",
+						twitter: ogVideoDisabled
+							? {
+									card: "summary_large_image",
+									title: `${video.name} | Cap Recording`,
+									description: "Watch this video on Cap",
+									images: previewImages,
+								}
+							: {
+									card: "player",
+									title: `${video.name} | Cap Recording`,
+									description: "Watch this video on Cap",
+									images: previewImages,
+									players: {
+										playerUrl: new URL(
+											`/s/${videoId}`,
+											buildEnv.NEXT_PUBLIC_WEB_URL,
+										).toString(),
+										streamUrl: playlistUrl,
+										width: 1280,
+										height: 720,
+									},
 								},
-								{
-									url: ogImageUrl,
-									width: 1200,
-									height: 630,
-								},
-							],
-							players: {
-								playerUrl: new URL(
-									`/s/${videoId}`,
-									buildEnv.NEXT_PUBLIC_WEB_URL,
-								).toString(),
-								streamUrl: playlistUrl,
-								width: 1280,
-								height: 720,
-							},
-						},
 						robots: canRenderSocialPreview
 							? "index, follow"
 							: "noindex, nofollow",
@@ -327,17 +332,21 @@ export async function generateMetadata(
 								height: 630,
 							},
 						],
-						videos: [
-							{
-								url: new URL(
-									`/api/playlist?videoId=${videoId}`,
-									buildEnv.NEXT_PUBLIC_WEB_URL,
-								).toString(),
-								width: 1280,
-								height: 720,
-								type: "video/mp4",
-							},
-						],
+						...(serverEnv().OG_VIDEO_DISABLED === "true"
+							? {}
+							: {
+									videos: [
+										{
+											url: new URL(
+												`/api/playlist?videoId=${videoId}`,
+												buildEnv.NEXT_PUBLIC_WEB_URL,
+											).toString(),
+											width: 1280,
+											height: 720,
+											type: "video/mp4",
+										},
+									],
+								}),
 					},
 					robots: "noindex, nofollow",
 				}),

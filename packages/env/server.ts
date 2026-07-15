@@ -123,6 +123,12 @@ function createServerEnv() {
 				.optional()
 				.describe("OpenAI-compatible chat completions base URL override"),
 			OPENAI_MODEL: z.string().optional(),
+			OG_VIDEO_DISABLED: z
+				.string()
+				.optional()
+				.describe(
+					"Set to true to omit og:video/twitter player tags from share pages so link previews show the thumbnail image",
+				),
 			ANTHROPIC_API_KEY: z.string().optional().describe("AI chat"),
 			OPENAI_API_KEY: z.string().optional().describe("AI summaries"),
 			GROQ_API_KEY: z.string().optional().describe("AI summaries"),

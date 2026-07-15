@@ -44,6 +44,7 @@ services:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://ollama:11434/v1}
       OPENAI_MODEL: ${OPENAI_MODEL:-qwen2.5:14b-instruct-q4_K_M}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-local-ollama}
+      OG_VIDEO_DISABLED: ${OG_VIDEO_DISABLED:-}
       MEDIA_SERVER_URL: http://media-server:3456
       MEDIA_SERVER_WEBHOOK_URL: http://cap-web:3000
     expose: ["3000"]
