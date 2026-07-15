@@ -26,6 +26,10 @@ services:
       CAP_AWS_REGION: ${CAP_AWS_REGION:-us-east-1}
       S3_PATH_STYLE: "false"
       CAP_ALLOWED_SIGNUP_DOMAINS: ${CAP_ALLOWED_SIGNUP_DOMAINS:?}
+      # Google sign-in (optional): set both to show "Continue with Google";
+      # email code remains available. Domain gate applies to Google too.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
