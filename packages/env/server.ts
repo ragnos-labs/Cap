@@ -30,6 +30,24 @@ function createServerEnv() {
 			RESEND_API_KEY: z.string().optional(),
 			RESEND_FROM_DOMAIN: z.string().optional(),
 
+			// SMTP email transport (e.g. AWS SES); when SMTP_HOST, SMTP_USER, and
+			// SMTP_PASSWORD are all set, email sends via SMTP instead of Resend
+			SMTP_HOST: z
+				.string()
+				.optional()
+				.describe(
+					"SMTP relay host; when set, email sends via SMTP instead of Resend",
+				),
+			SMTP_PORT: z.string().optional().describe("SMTP port, default 587"),
+			SMTP_USER: z.string().optional(),
+			SMTP_PASSWORD: z.string().optional(),
+			SMTP_FROM: z
+				.string()
+				.optional()
+				.describe(
+					"From address for SMTP mail; defaults to auth@RESEND_FROM_DOMAIN",
+				),
+
 			/// S3 configuration
 			// Though they are prefixed with `CAP_AWS`, these don't have to be
 			// for AWS, and can instead be for any S3-compatible service
@@ -87,6 +105,18 @@ function createServerEnv() {
 
 			/// AI providers
 			DEEPGRAM_API_KEY: z.string().optional().describe("Audio transcription"),
+			TRANSCRIPTION_URL: z
+				.string()
+				.optional()
+				.describe(
+					"OpenAI-compatible transcription endpoint (full URL); overrides Deepgram",
+				),
+			TRANSCRIPTION_MODEL: z.string().optional(),
+			OPENAI_BASE_URL: z
+				.string()
+				.optional()
+				.describe("OpenAI-compatible chat completions base URL override"),
+			OPENAI_MODEL: z.string().optional(),
 			ANTHROPIC_API_KEY: z.string().optional().describe("AI chat"),
 			OPENAI_API_KEY: z.string().optional().describe("AI summaries"),
 			GROQ_API_KEY: z.string().optional().describe("AI summaries"),
