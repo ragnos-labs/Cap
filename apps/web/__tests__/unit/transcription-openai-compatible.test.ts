@@ -60,6 +60,27 @@ describe("transcribeWithOpenAiCompatible", () => {
 		const form = fetchImpl.mock.calls[0]![1]!.body as FormData;
 		expect(form.get("language")).toBeNull();
 	});
+	it("sends a bearer Authorization header when apiKey is set", async () => {
+		const fetchImpl = mockFetch(VTT);
+		await transcribeWithOpenAiCompatible(new Uint8Array([1]), {
+			url: "https://x.openai.azure.com/openai/deployments/whisper/audio/transcriptions?api-version=2024-10-21",
+			apiKey: "azure-key",
+			fetchImpl,
+		});
+		const init = fetchImpl.mock.calls[0]![1]!;
+		expect((init.headers as Record<string, string>).Authorization).toBe(
+			"Bearer azure-key",
+		);
+	});
+	it("sends no Authorization header when apiKey is unset", async () => {
+		const fetchImpl = mockFetch(VTT);
+		await transcribeWithOpenAiCompatible(new Uint8Array([1]), {
+			url: "http://w:8080/inference",
+			fetchImpl,
+		});
+		const init = fetchImpl.mock.calls[0]![1]!;
+		expect(init.headers).toBeUndefined();
+	});
 	it("throws on non-200", async () => {
 		const fetchImpl = mockFetch("boom", 500);
 		await expect(

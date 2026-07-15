@@ -11,6 +11,7 @@ export async function transcribeWithOpenAiCompatible(
 		url: string;
 		model?: string;
 		language?: string;
+		apiKey?: string;
 		fetchImpl?: typeof fetch;
 	},
 ): Promise<string> {
@@ -26,7 +27,13 @@ export async function transcribeWithOpenAiCompatible(
 	if (opts.language && opts.language !== "auto")
 		form.append("language", opts.language);
 
-	const res = await fetchImpl(opts.url, { method: "POST", body: form });
+	const res = await fetchImpl(opts.url, {
+		method: "POST",
+		body: form,
+		...(opts.apiKey
+			? { headers: { Authorization: `Bearer ${opts.apiKey}` } }
+			: {}),
+	});
 	if (!res.ok) {
 		const text = await res.text().catch(() => "");
 		throw new Error(

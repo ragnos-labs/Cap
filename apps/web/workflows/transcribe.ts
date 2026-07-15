@@ -349,6 +349,7 @@ async function transcribeWithProvider(
 	return transcribeWithOpenAiCompatible(audio, {
 		url: transcriptionUrl,
 		model: serverEnv().TRANSCRIPTION_MODEL,
+		apiKey: serverEnv().TRANSCRIPTION_API_KEY,
 		language,
 	});
 }

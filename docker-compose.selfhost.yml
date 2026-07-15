@@ -32,11 +32,14 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-}
       RESEND_FROM_DOMAIN: ${RESEND_FROM_DOMAIN:-ragnos.io}
-      TRANSCRIPTION_URL: http://whisper:8080/inference
-      TRANSCRIPTION_MODEL: small.en
-      OPENAI_BASE_URL: http://ollama:11434/v1
+      # AI providers: defaults are the on-box local stack; override in .env to
+      # point at any OpenAI-compatible endpoint (e.g. Azure OpenAI).
+      TRANSCRIPTION_URL: ${TRANSCRIPTION_URL:-http://whisper:8080/inference}
+      TRANSCRIPTION_MODEL: ${TRANSCRIPTION_MODEL:-small.en}
+      TRANSCRIPTION_API_KEY: ${TRANSCRIPTION_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://ollama:11434/v1}
       OPENAI_MODEL: ${OPENAI_MODEL:-qwen2.5:14b-instruct-q4_K_M}
-      OPENAI_API_KEY: local-ollama
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-local-ollama}
       MEDIA_SERVER_URL: http://media-server:3456
       MEDIA_SERVER_WEBHOOK_URL: http://cap-web:3000
     expose: ["3000"]

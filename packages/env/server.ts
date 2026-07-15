@@ -112,6 +112,12 @@ function createServerEnv() {
 					"OpenAI-compatible transcription endpoint (full URL); overrides Deepgram",
 				),
 			TRANSCRIPTION_MODEL: z.string().optional(),
+			TRANSCRIPTION_API_KEY: z
+				.string()
+				.optional()
+				.describe(
+					"Bearer token for the transcription endpoint (e.g. Azure OpenAI key); omit for unauthenticated local servers",
+				),
 			OPENAI_BASE_URL: z
 				.string()
 				.optional()
