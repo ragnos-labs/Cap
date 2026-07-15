@@ -58,7 +58,8 @@ services:
       PORT: 3456
       MEDIA_SERVER_WEBHOOK_SECRET: ${MEDIA_SERVER_WEBHOOK_SECRET:?}
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3456/health"]
+      # image has no wget/curl; probe with its own bun runtime
+      test: ["CMD", "bun", "-e", "fetch('http://localhost:3456/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
