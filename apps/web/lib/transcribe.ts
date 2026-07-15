@@ -4,6 +4,7 @@ import { serverEnv } from "@cap/env";
 import type { Video } from "@cap/web-domain";
 import { and, eq, isNull } from "drizzle-orm";
 import { start } from "workflow/api";
+import { transcriptionConfigured } from "@/lib/transcription/openai-compatible";
 import { transcribeVideoWorkflow } from "@/workflows/transcribe";
 
 type TranscribeResult = {
@@ -29,7 +30,7 @@ export async function transcribeVideo(
 	userId: string,
 	aiGenerationEnabled = false,
 ): Promise<TranscribeResult> {
-	if (!serverEnv().DEEPGRAM_API_KEY) {
+	if (!transcriptionConfigured(serverEnv())) {
 		return {
 			success: false,
 			message: "Missing necessary environment variables",
