@@ -8,10 +8,6 @@ import { ImageResponse } from "next/og";
 import { runPromise } from "@/lib/server";
 import { decodeStorageVideo } from "@/lib/video-storage";
 
-const PLAY_ICON_DATA_URI = `data:image/svg+xml;base64,${Buffer.from(
-	'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="56" height="56"><polygon points="6,3 20,12 6,21" fill="#ffffff"/></svg>',
-).toString("base64")}`;
-
 export async function generateVideoOgImage(videoId: Video.VideoId) {
 	const videoData = await getData(videoId);
 
@@ -114,8 +110,11 @@ export async function generateVideoOgImage(videoId: Video.VideoId) {
 						: "radial-gradient(90.01% 80.01% at 53.53% 49.99%,#d3e5ff 30.65%,#4785ff 88.48%,#fff 100%)",
 				}}
 			>
-				{/* satori ignores z-index, so paint order is document order: the
-				    screenshot must come before the play badge or it covers it. */}
+				{/* No play affordance: the bundled @vercel/og renderer cannot draw
+				    one reliably. Filled shapes never appear, and the upstream svg
+				    rendered as a mispositioned open chevron with its <title> leaking
+				    as literal text. This card is only the fallback for recordings with
+				    no screenshot; share links point og:image at the frame itself. */}
 				{screenshotUrl && (
 					<div
 						style={{
@@ -128,28 +127,6 @@ export async function generateVideoOgImage(videoId: Video.VideoId) {
 						}}
 					/>
 				)}
-				<div
-					style={{
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						width: "140px",
-						height: "140px",
-						position: "absolute",
-						top: "50%",
-						left: "50%",
-						transform: "translate(-50%, -50%)",
-						borderRadius: "70px",
-						background: "rgba(0, 0, 0, 0.55)",
-					}}
-				>
-					{/* Data-URI img, not inline svg: the bundled @vercel/og renderer
-					    has crippled inline-svg support (it drops fill, does not close
-					    polygons, and renders <title> as literal text). An img hands a
-					    complete svg document to resvg, which rasterizes it correctly. */}
-					{/** biome-ignore lint/performance/noImgElement: satori renders img, not next/image */}
-					<img src={PLAY_ICON_DATA_URI} width={56} height={56} alt="" style={{ marginLeft: "8px" }} />
-				</div>
 			</div>
 		</div>,
 		{
