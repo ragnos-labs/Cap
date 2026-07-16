@@ -8,6 +8,10 @@ import { ImageResponse } from "next/og";
 import { runPromise } from "@/lib/server";
 import { decodeStorageVideo } from "@/lib/video-storage";
 
+const PLAY_ICON_DATA_URI = `data:image/svg+xml;base64,${Buffer.from(
+	'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="56" height="56"><polygon points="6,3 20,12 6,21" fill="#ffffff"/></svg>',
+).toString("base64")}`;
+
 export async function generateVideoOgImage(videoId: Video.VideoId) {
 	const videoData = await getData(videoId);
 
@@ -139,29 +143,12 @@ export async function generateVideoOgImage(videoId: Video.VideoId) {
 						background: "rgba(0, 0, 0, 0.55)",
 					}}
 				>
-					{/* Fixed wrapper + percentage-sized svg + explicit hex fill: the
-					    bundled @vercel/og renderer drops the polygon when it is sized
-					    only by px style or filled via currentColor. */}
-					<div
-						style={{
-							display: "flex",
-							width: "60px",
-							height: "60px",
-							marginLeft: "8px",
-						}}
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="60"
-							height="60"
-							viewBox="0 0 24 24"
-							fill="#ffffff"
-							style={{ width: "100%", height: "100%", display: "flex" }}
-							aria-label="Play"
-						>
-							<polygon points="6 3 20 12 6 21 6 3" fill="#ffffff"></polygon>
-						</svg>
-					</div>
+					{/* Data-URI img, not inline svg: the bundled @vercel/og renderer
+					    has crippled inline-svg support (it drops fill, does not close
+					    polygons, and renders <title> as literal text). An img hands a
+					    complete svg document to resvg, which rasterizes it correctly. */}
+					{/** biome-ignore lint/performance/noImgElement: satori renders img, not next/image */}
+					<img src={PLAY_ICON_DATA_URI} width={56} height={56} alt="" style={{ marginLeft: "8px" }} />
 				</div>
 			</div>
 		</div>,
