@@ -238,11 +238,12 @@ export async function generateMetadata(
 							}
 						: notFound(),
 				onSome: ([video]) => {
-					// The share preview is the recording's own captured frame. This
-					// endpoint redirects to the screenshot object and falls back to the
-					// composed og card only when a recording has no screenshot.
-					const firstFrameUrl = new URL(
-						`/api/video/screenshot?videoId=${videoId}&fallback=og`,
+					// Native Cap share preview: the recorder's own animated preview
+					// GIF (media server writes preview/animated-preview.gif alongside
+					// result.mp4). This route 302s to the signed GIF and falls back to
+					// the composed og card only when a recording has no GIF.
+					const previewImageUrl = new URL(
+						`/api/video/preview?videoId=${videoId}&fallback=og`,
 						buildEnv.NEXT_PUBLIC_WEB_URL,
 					).toString();
 					const playlistUrl = new URL(
@@ -254,11 +255,12 @@ export async function generateMetadata(
 					// black video-player card instead of the thumbnail. Setting
 					// OG_VIDEO_DISABLED=true serves image-only previews.
 					const ogVideoDisabled = serverEnv().OG_VIDEO_DISABLED === "true";
-					// One image only: with several og:image tags each messenger picks a
-					// different one, which is how the composed card got shown instead of
-					// the recording. Dimensions are omitted because they vary per
-					// recording and crawlers measure the fetched image anyway.
-					const previewImages = [{ url: firstFrameUrl }];
+					// One image only: upstream emits both the GIF and the composed card,
+					// and with two og:image tags each messenger picks a different one,
+					// which is how the generic card got shown instead of the recording.
+					// The GIF's fallback=og redirect still serves the card for
+					// GIF-less recordings, so the card path is preserved.
+					const previewImages = [{ url: previewImageUrl }];
 
 					return {
 						title: `${video.name} | Cap Recording`,
