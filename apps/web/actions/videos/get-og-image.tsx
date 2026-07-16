@@ -110,6 +110,8 @@ export async function generateVideoOgImage(videoId: Video.VideoId) {
 						: "radial-gradient(90.01% 80.01% at 53.53% 49.99%,#d3e5ff 30.65%,#4785ff 88.48%,#fff 100%)",
 				}}
 			>
+				{/* satori ignores z-index, so paint order is document order: the
+				    screenshot must come before the play badge or it covers it. */}
 				{screenshotUrl && (
 					<div
 						style={{
@@ -119,7 +121,6 @@ export async function generateVideoOgImage(videoId: Video.VideoId) {
 							backgroundImage: `url(${screenshotUrl})`,
 							backgroundPosition: "center",
 							backgroundSize: "cover",
-							zIndex: 1,
 						}}
 					/>
 				)}
@@ -136,29 +137,31 @@ export async function generateVideoOgImage(videoId: Video.VideoId) {
 						transform: "translate(-50%, -50%)",
 						borderRadius: "70px",
 						background: "rgba(0, 0, 0, 0.55)",
-						zIndex: 10,
 					}}
 				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
+					{/* Fixed wrapper + percentage-sized svg + explicit hex fill: the
+					    bundled @vercel/og renderer drops the polygon when it is sized
+					    only by px style or filled via currentColor. */}
+					<div
 						style={{
-							width: "64px",
-							height: "64px",
-							marginLeft: "10px",
-							color: "#ffffff",
 							display: "flex",
+							width: "60px",
+							height: "60px",
+							marginLeft: "8px",
 						}}
-						viewBox="0 0 24 24"
-						fill="currentColor"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						// No <title>: satori renders it as literal visible text on the card.
-						aria-label="Play"
 					>
-						<polygon points="6 3 20 12 6 21 6 3"></polygon>
-					</svg>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="60"
+							height="60"
+							viewBox="0 0 24 24"
+							fill="#ffffff"
+							style={{ width: "100%", height: "100%", display: "flex" }}
+							aria-label="Play"
+						>
+							<polygon points="6 3 20 12 6 21 6 3" fill="#ffffff"></polygon>
+						</svg>
+					</div>
 				</div>
 			</div>
 		</div>,
