@@ -478,14 +478,14 @@ async function generateSingleChunk(
 The video is ${videoDuration} seconds long (${Math.floor(videoDuration / 60)}:${String(Math.floor(videoDuration % 60)).padStart(2, "0")} total). Analyze this timestamped transcript and provide a detailed JSON response:
 {
   "title": "string (concise but descriptive title that captures the main topic)",
-  "summary": "string (detailed summary that covers ALL key points discussed. For meetings: include decisions made, action items, and key discussion points. For tutorials: cover all steps and concepts explained. For presentations: summarize all main arguments and supporting points. Write from 1st person perspective if the speaker is teaching/presenting, e.g. 'In this video, I walk through...'. Make it comprehensive enough that someone could understand the full content without watching.)",
+  "summary": "string (markdown, in two parts. Part 1: a one-to-two sentence plain-language overview of the whole video. Part 2: after a blank line, a bulleted list (lines starting with '- ') covering ALL key points. For meetings: decisions made, action items, and key discussion points. For tutorials: each step and concept. For presentations: each main argument. Include specific details like names, numbers, and conclusions as bullets, never as long paragraphs. Write from 1st person perspective if the speaker is teaching/presenting, e.g. 'In this video, I walk through...'. Comprehensive enough that someone could understand the full content without watching.)",
   "chapters": [{"title": "string (descriptive chapter title)", "start": number (seconds from start)}]
 }
 
 Guidelines:
 - ${languageInstruction}
 - Keep JSON property names exactly as shown
-- The summary should be detailed and comprehensive, not a brief overview
+- The summary MUST follow the overview-then-bullets markdown format: max two sentences of prose, then bullets; no wall of text
 - Capture ALL important topics, not just the main theme
 - For longer content, organize the summary by topic or chronologically
 - Include specific details, names, numbers, and conclusions mentioned
