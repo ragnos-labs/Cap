@@ -1,3 +1,4 @@
+import { buildEnv } from "@cap/env";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -15,6 +16,18 @@ export const uuidFormat = (uuid: string) => {
 
 export const CAP_LOGO_URL =
 	"https://raw.githubusercontent.com/CapSoftware/cap/main/apps/desktop/src-tauri/icons/Square310x310Logo.png";
+
+// Self-hosted instances (NEXT_PUBLIC_IS_CAP unset) brand emails as RAGnos and
+// serve the email logo from their own origin instead of the Cap GitHub asset.
+// These are lazy functions on purpose: buildEnv must not be evaluated at
+// module load (test and desktop bundles do not carry the web env).
+export const emailBrandName = () =>
+	buildEnv.NEXT_PUBLIC_IS_CAP ? "Cap" : "RAGnos";
+
+export const emailLogoUrl = () =>
+	buildEnv.NEXT_PUBLIC_IS_CAP
+		? CAP_LOGO_URL
+		: `${buildEnv.NEXT_PUBLIC_WEB_URL}/android-chrome-192x192.png`;
 
 export const saveLatestVideoId = (videoId: string) => {
 	try {

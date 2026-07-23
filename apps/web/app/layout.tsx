@@ -1,4 +1,5 @@
 import "@/app/globals.css";
+import { buildEnv } from "@cap/env";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import Script from "next/script";
@@ -40,20 +41,28 @@ const defaultFont = localFont({
 	preload: false,
 });
 
-export const metadata: Metadata = {
-	metadataBase: new URL("https://cap.so"),
-	title: "Cap — Beautiful screen recordings, owned by you.",
-	description:
-		"Cap is the open source alternative to Loom. Lightweight, powerful, and cross-platform. Record and share in seconds.",
-	openGraph: {
-		title: "Cap — Beautiful screen recordings, owned by you.",
-		description:
-			"Cap is the open source alternative to Loom. Lightweight, powerful, and cross-platform. Record and share in seconds.",
-		type: "website",
-		url: "https://cap.so",
-		images: ["https://cap.so/og.png"],
-	},
-};
+// Self-hosted instances (NEXT_PUBLIC_IS_CAP unset) brand as RAGnos Video and
+// resolve relative metadata against their own origin instead of cap.so.
+export const metadata: Metadata = buildEnv.NEXT_PUBLIC_IS_CAP
+	? {
+			metadataBase: new URL("https://cap.so"),
+			title: "Cap — Beautiful screen recordings, owned by you.",
+			description:
+				"Cap is the open source alternative to Loom. Lightweight, powerful, and cross-platform. Record and share in seconds.",
+			openGraph: {
+				title: "Cap — Beautiful screen recordings, owned by you.",
+				description:
+					"Cap is the open source alternative to Loom. Lightweight, powerful, and cross-platform. Record and share in seconds.",
+				type: "website",
+				url: "https://cap.so",
+				images: ["https://cap.so/og.png"],
+			},
+		}
+	: {
+			metadataBase: new URL(buildEnv.NEXT_PUBLIC_WEB_URL),
+			title: "RAGnos Video",
+			description: "Screen recordings from RAGnos Labs.",
+		};
 
 export default function RootLayout({ children }: PropsWithChildren) {
 	return (
@@ -77,7 +86,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
 					href="/favicon-16x16.png"
 				/>
 				<link rel="manifest" href="/site.webmanifest" />
-				<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5" />
+				<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#0D1117" />
 				<link rel="shortcut icon" href="/favicon.ico" />
 				<meta name="msapplication-TileColor" content="#da532c" />
 				<meta name="theme-color" content="#ffffff" />

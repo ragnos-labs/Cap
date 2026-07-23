@@ -2,11 +2,12 @@ import { getCurrentUser } from "@cap/database/auth/session";
 import { serverEnv } from "@cap/env";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { brandName } from "@/lib/share-meta";
 import { getSafeNextPath } from "../safe-next";
 import { VerifyOTPForm } from "./form";
 
 export const metadata = {
-	title: "Verify Code | Cap",
+	title: `Verify Code | ${brandName}`,
 };
 
 export default async function VerifyOTPPage(props: {

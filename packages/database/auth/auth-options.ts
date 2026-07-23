@@ -10,6 +10,7 @@ import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import type { Provider } from "next-auth/providers/index";
 import WorkOSProvider from "next-auth/providers/workos";
+import { emailBrandName } from "@cap/utils";
 import { sendEmail } from "../emails/config.ts";
 import { db } from "../index.ts";
 import { users } from "../schema.ts";
@@ -126,7 +127,7 @@ export const authOptions = (): NextAuthOptions => {
 							const email = OTPEmail({ code: token, email: identifier });
 							await sendEmail({
 								email: identifier,
-								subject: `Your Cap Verification Code`,
+								subject: `Your ${emailBrandName()} Verification Code`,
 								react: email,
 							});
 						}
