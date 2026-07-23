@@ -42,7 +42,7 @@ const SummaryChapters = ({
 	if (aiLoading || (!hasSummary && !hasChapters)) return null;
 
 	return (
-		<div className="p-4 bg-white rounded-2xl border border-gray-3">
+		<div className="p-4 bg-gray-1 rounded-2xl border border-gray-3">
 			{hasSummary && (
 				<>
 					<h3 className="text-lg font-medium">Summary</h3>
@@ -64,7 +64,7 @@ const SummaryChapters = ({
 						{aiData.chapters?.map((chapter) => (
 							<div
 								key={chapter.start}
-								className="flex items-center p-2 rounded transition-colors cursor-pointer hover:bg-gray-100"
+								className="flex items-center p-2 rounded transition-colors cursor-pointer hover:bg-gray-3"
 								onClick={() => handleSeek(chapter.start)}
 							>
 								<span className="w-16 text-xs text-gray-500">

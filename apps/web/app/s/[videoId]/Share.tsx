@@ -524,7 +524,7 @@ export const Share = ({
 			<div className="mt-4">
 				<div className="flex flex-col gap-4 lg:flex-row">
 					<div className="flex-1">
-						<div className="overflow-visible relative bg-white rounded-2xl border aspect-video border-gray-5">
+						<div className="overflow-visible relative bg-gray-1 rounded-2xl border aspect-video border-gray-5">
 							<div className="absolute inset-3 w-[calc(100%-1.5rem)] h-[calc(100%-1.5rem)] overflow-visible rounded-xl">
 								{isScreenshot ? (
 									<ScreenshotImage src={screenshotImageUrl} alt={data.name} />
@@ -603,24 +603,24 @@ export const Share = ({
 						<div className="p-4 animate-pulse new-card-style">
 							<div className="space-y-6">
 								<div>
-									<div className="mb-3 w-24 h-6 bg-gray-200 rounded"></div>
-									<div className="mb-4 w-32 h-3 bg-gray-100 rounded"></div>
+									<div className="mb-3 w-24 h-6 bg-gray-4 rounded"></div>
+									<div className="mb-4 w-32 h-3 bg-gray-3 rounded"></div>
 									<div className="space-y-3">
-										<div className="w-full h-4 bg-gray-200 rounded"></div>
-										<div className="w-5/6 h-4 bg-gray-200 rounded"></div>
-										<div className="w-4/5 h-4 bg-gray-200 rounded"></div>
-										<div className="w-full h-4 bg-gray-200 rounded"></div>
-										<div className="w-3/4 h-4 bg-gray-200 rounded"></div>
+										<div className="w-full h-4 bg-gray-4 rounded"></div>
+										<div className="w-5/6 h-4 bg-gray-4 rounded"></div>
+										<div className="w-4/5 h-4 bg-gray-4 rounded"></div>
+										<div className="w-full h-4 bg-gray-4 rounded"></div>
+										<div className="w-3/4 h-4 bg-gray-4 rounded"></div>
 									</div>
 								</div>
 
 								<div>
-									<div className="mb-4 w-24 h-6 bg-gray-200 rounded"></div>
+									<div className="mb-4 w-24 h-6 bg-gray-4 rounded"></div>
 									<div className="space-y-2">
 										{[1, 2, 3, 4].map((i) => (
 											<div key={i} className="flex items-center p-2">
-												<div className="mr-3 w-12 h-4 bg-gray-200 rounded"></div>
-												<div className="flex-1 h-4 bg-gray-200 rounded"></div>
+												<div className="mr-3 w-12 h-4 bg-gray-4 rounded"></div>
+												<div className="flex-1 h-4 bg-gray-4 rounded"></div>
 											</div>
 										))}
 									</div>

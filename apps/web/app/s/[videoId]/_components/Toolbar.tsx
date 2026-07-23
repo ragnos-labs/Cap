@@ -29,7 +29,7 @@ const EmojiButton = ({ label, emoji, onClick }: EmojiButtonProps) => (
 	<motion.div layout className="relative size-10">
 		<motion.button
 			layout
-			className="inline-flex relative justify-center items-center p-1 text-xl leading-6 align-middle bg-transparent rounded-full transition-colors ease-in-out size-full font-emoji sm:text-2xl duration-600 hover:bg-gray-200 active:bg-blue-500 active:duration-0"
+			className="inline-flex relative justify-center items-center p-1 text-xl leading-6 align-middle bg-transparent rounded-full transition-colors ease-in-out size-full font-emoji sm:text-2xl duration-600 hover:bg-gray-4 active:bg-blue-500 active:duration-0"
 			role="img"
 			aria-label={label ? label : ""}
 			aria-hidden={label ? "false" : "true"}
@@ -200,7 +200,7 @@ export const Toolbar = ({
 		<>
 			<motion.div
 				layout
-				className="flex overflow-hidden p-2 mx-auto max-w-full bg-white rounded-full border border-gray-5 md:max-w-fit"
+				className="flex overflow-hidden p-2 mx-auto max-w-full bg-gray-1 rounded-full border border-gray-5 md:max-w-fit"
 			>
 				<AnimatePresence initial={false} mode="popLayout">
 					{commentBoxOpen && canComment ? (
