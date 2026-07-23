@@ -57,7 +57,19 @@ export async function proxy(request: NextRequest) {
 				path.startsWith("/terms") ||
 				path.startsWith("/verify-otp") ||
 				path.startsWith("/embed/") ||
-				path.startsWith("/.well-known/workflow/")
+				path.startsWith("/.well-known/workflow/") ||
+				// Public static assets: theme bootstrap, favicons, manifest,
+				// and fonts must load for anonymous share-page viewers and
+				// email clients.
+				path === "/theme-script.js" ||
+				path === "/robots.txt" ||
+				path === "/site.webmanifest" ||
+				path === "/safari-pinned-tab.svg" ||
+				path === "/apple-touch-icon.png" ||
+				path.startsWith("/favicon") ||
+				path.startsWith("/android-chrome-") ||
+				path.startsWith("/fonts/") ||
+				path.startsWith("/logos/")
 			) &&
 			process.env.NODE_ENV !== "development"
 		)
