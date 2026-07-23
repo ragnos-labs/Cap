@@ -26,6 +26,7 @@ services:
       CAP_AWS_REGION: ${CAP_AWS_REGION:-us-east-1}
       S3_PATH_STYLE: "false"
       CAP_ALLOWED_SIGNUP_DOMAINS: ${CAP_ALLOWED_SIGNUP_DOMAINS:?}
+      CAP_CREATOR_DOMAINS: ${CAP_CREATOR_DOMAINS:?}
       # true = anyone with the link can view a new video; false = new videos
       # start private until shared from the share dialog.
       CAP_VIDEOS_DEFAULT_PUBLIC: ${CAP_VIDEOS_DEFAULT_PUBLIC:-true}

@@ -1,9 +1,12 @@
 import { db } from "@cap/database";
+import { getAccountAccessMode } from "@cap/database/auth/domain-utils";
 import { organizations } from "@cap/database/schema";
 import { buildEnv, serverEnv } from "@cap/env";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { type NextRequest, NextResponse, userAgent } from "next/server";
+import { getToken } from "next-auth/jwt";
+import { getViewerRouteDecision } from "@/lib/viewer-access";
 
 const addHttps = (s?: string) => {
 	if (!s) return s;
@@ -23,6 +26,35 @@ const mainOrigins = [
 export async function proxy(request: NextRequest) {
 	const url = new URL(request.url);
 	const path = url.pathname;
+
+	if (
+		buildEnv.NEXT_PUBLIC_IS_CAP !== "true" &&
+		request.cookies.has("next-auth.session-token")
+	) {
+		const token = await getToken({
+			req: request,
+			secret: serverEnv().NEXTAUTH_SECRET,
+			cookieName: "next-auth.session-token",
+		});
+		const email = typeof token?.email === "string" ? token.email : "";
+
+		if (
+			email &&
+			getAccountAccessMode(email, serverEnv().CAP_CREATOR_DOMAINS) === "viewer"
+		) {
+			const decision = getViewerRouteDecision(path, request.method);
+
+			if (decision.type === "redirect") {
+				return NextResponse.redirect(new URL(decision.location, url.origin));
+			}
+			if (decision.type === "forbid") {
+				return NextResponse.json(
+					{ error: "Viewer accounts cannot access this route." },
+					{ status: 403 },
+				);
+			}
+		}
+	}
 
 	if (path === "/" && request.cookies.has("next-auth.session-token")) {
 		return NextResponse.redirect(new URL("/dashboard/caps", url.origin));
@@ -56,6 +88,7 @@ export async function proxy(request: NextRequest) {
 				path.startsWith("/download") ||
 				path.startsWith("/terms") ||
 				path.startsWith("/verify-otp") ||
+				path.startsWith("/viewer") ||
 				path.startsWith("/embed/") ||
 				path.startsWith("/.well-known/workflow/") ||
 				// Public static assets: theme bootstrap, favicons, manifest,
@@ -130,6 +163,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
 	matcher: [
-		"/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
+		"/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
 	],
 };

@@ -42,6 +42,31 @@ export class SpacesRepo extends Effect.Service<SpacesRepo>()("SpacesRepo", {
 						.where(Dz.eq(Db.spaceVideos.videoId, videoId)),
 				),
 
+			audiencesForVideo: (videoId: Video.VideoId) =>
+				db
+					.use((db) =>
+						db
+							.select({
+								id: Db.spaces.id,
+								name: Db.spaces.name,
+								settings: Db.spaces.settings,
+							})
+							.from(Db.spaceVideos)
+							.innerJoin(Db.spaces, Dz.eq(Db.spaceVideos.spaceId, Db.spaces.id))
+							.where(Dz.eq(Db.spaceVideos.videoId, videoId)),
+					)
+					.pipe(
+						Effect.map((rows) =>
+							rows.flatMap((row) => {
+								const domains = row.settings?.audienceDomains;
+								if (!Array.isArray(domains) || domains.length === 0) {
+									return [];
+								}
+								return [{ id: row.id, name: row.name, domains }];
+							}),
+						),
+					),
+
 			membership: (
 				userId: User.UserId,
 				spaceId: Space.SpaceIdOrOrganisationId,

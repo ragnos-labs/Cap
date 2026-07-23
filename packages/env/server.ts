@@ -102,6 +102,12 @@ function createServerEnv() {
 				.string()
 				.optional()
 				.describe("Comma-separated list of permitted signup domains"),
+			CAP_CREATOR_DOMAINS: z
+				.string()
+				.optional()
+				.describe(
+					"Comma-separated list of domains that receive creator access; other permitted signup domains are viewer-only",
+				),
 
 			/// AI providers
 			DEEPGRAM_API_KEY: z.string().optional().describe("Audio transcription"),

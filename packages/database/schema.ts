@@ -1023,6 +1023,7 @@ export const spaces = mysqlTable(
 			disableReactions?: boolean;
 			disableTranscript?: boolean;
 			disableComments?: boolean;
+			audienceDomains?: string[];
 			publicPage?: PublicCollection.PublicPageSettings;
 		}>(),
 		password: encryptedTextNullable("password"),

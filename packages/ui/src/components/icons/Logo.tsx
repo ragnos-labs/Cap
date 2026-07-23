@@ -7,7 +7,7 @@ export const Logo = ({
 	showBeta,
 	white,
 	hideLogoName,
-	viewBoxDimensions = "0 0 120 40",
+	viewBoxDimensions = "0 0 170 40",
 	style,
 }: {
 	className?: string;
@@ -30,9 +30,11 @@ export const Logo = ({
 				preserveAspectRatio="xMidYMid meet"
 				fill="none"
 				style={style}
-				aria-label="RAGnos Logo"
+				aria-label="RAGnos Labs Logo"
+				role="img"
 				className={className}
 			>
+				<title>RAGnos Labs</title>
 				<rect
 					width="36"
 					height="36"
@@ -64,7 +66,7 @@ export const Logo = ({
 						fontWeight="700"
 						letterSpacing="1"
 					>
-						RAGnos
+						RAGnos Labs
 					</text>
 				)}
 			</svg>

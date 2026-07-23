@@ -18,7 +18,29 @@ export function isEmailAllowedForSignup(
 	return allowedDomains.includes(emailDomain.toLowerCase());
 }
 
-function extractDomainFromEmail(email: string): string | null {
+export type AccountAccessMode = "creator" | "viewer";
+
+export function getAccountAccessMode(
+	email: string,
+	creatorDomainsConfig?: string,
+): AccountAccessMode {
+	if (!creatorDomainsConfig || creatorDomainsConfig.trim() === "") {
+		return "creator";
+	}
+
+	const emailDomain = extractDomainFromEmail(email);
+	if (!emailDomain) {
+		return "viewer";
+	}
+
+	return parseAllowedDomains(creatorDomainsConfig).includes(
+		emailDomain.toLowerCase(),
+	)
+		? "creator"
+		: "viewer";
+}
+
+export function extractDomainFromEmail(email: string): string | null {
 	// TODO: replace with zod v4's z.email()
 	const emailValidation = z.string().email().safeParse(email);
 	if (!emailValidation.success) {
@@ -30,11 +52,15 @@ function extractDomainFromEmail(email: string): string | null {
 	return atIndex !== -1 ? email.substring(atIndex + 1) : null;
 }
 
-function parseAllowedDomains(allowedDomainsConfig: string): string[] {
-	return allowedDomainsConfig
-		.split(",")
-		.map((domain) => domain.trim().toLowerCase())
-		.filter((domain) => domain.length > 0 && isValidDomain(domain));
+export function parseAllowedDomains(allowedDomainsConfig: string): string[] {
+	return [
+		...new Set(
+			allowedDomainsConfig
+				.split(",")
+				.map((domain) => domain.trim().toLowerCase())
+				.filter((domain) => domain.length > 0 && isValidDomain(domain)),
+		),
+	];
 }
 
 function isValidDomain(domain: string): boolean {

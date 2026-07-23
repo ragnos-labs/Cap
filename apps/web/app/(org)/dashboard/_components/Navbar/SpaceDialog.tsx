@@ -25,10 +25,13 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
+import type {
+	SpaceSettingKey,
+	SpaceSettings,
+} from "@/actions/organization/space-settings";
 import { updateSpace } from "@/actions/organization/update-space";
 import { FileInput } from "@/components/FileInput";
 import { useDashboardContext } from "../../Contexts";
-import type { OrganizationSettings } from "../../dashboard-data";
 import { MemberSelect } from "../../spaces/[spaceId]/components/MemberSelect";
 import { PublicCollectionField } from "../PublicCollectionField";
 import { createSpace } from "./server";
@@ -42,7 +45,7 @@ interface SpaceDialogProps {
 		name: string;
 		members: string[];
 		iconUrl?: ImageUpload.ImageUrl;
-		settings?: OrganizationSettings | null;
+		settings?: SpaceSettings | null;
 		hasPassword?: boolean;
 		public?: boolean;
 	} | null;
@@ -125,7 +128,7 @@ export interface NewSpaceFormProps {
 		name: string;
 		members: string[];
 		iconUrl?: ImageUpload.ImageUrl;
-		settings?: OrganizationSettings | null;
+		settings?: SpaceSettings | null;
 		hasPassword?: boolean;
 		public?: boolean;
 	} | null;
@@ -139,18 +142,19 @@ const formSchema = z.object({
 	members: z.array(z.string()).optional(),
 });
 
-const defaultSettings: OrganizationSettings = {
+const defaultSettings: SpaceSettings = {
 	disableComments: false,
 	disableSummary: false,
 	disableCaptions: false,
 	disableChapters: false,
 	disableReactions: false,
 	disableTranscript: false,
+	audienceDomains: [],
 };
 
 const settingOptions: {
 	label: string;
-	value: keyof OrganizationSettings;
+	value: SpaceSettingKey;
 	description: string;
 	pro?: boolean;
 }[] = [
@@ -217,7 +221,7 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 	const [isUploading, setIsUploading] = useState(false);
 	const { activeOrganization, user, setUpgradeModalOpen } =
 		useDashboardContext();
-	const [settings, setSettings] = useState<OrganizationSettings>({
+	const [settings, setSettings] = useState<SpaceSettings>({
 		...defaultSettings,
 		...space?.settings,
 	});
@@ -226,16 +230,21 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 	);
 	const [publicEnabled, setPublicEnabled] = useState(Boolean(space?.public));
 	const [passwordValue, setPasswordValue] = useState("");
+	const [audienceDomains, setAudienceDomains] = useState(
+		space?.settings?.audienceDomains?.join(", ") ?? "",
+	);
 	const iconInputId = useId();
+	const audienceDomainsInputId = useId();
 
 	useEffect(() => {
 		setSettings({ ...defaultSettings, ...space?.settings });
 		setPasswordEnabled(Boolean(space?.hasPassword));
 		setPublicEnabled(Boolean(space?.public));
 		setPasswordValue("");
+		setAudienceDomains(space?.settings?.audienceDomains?.join(", ") ?? "");
 	}, [space]);
 
-	const handleToggleSetting = (key: keyof OrganizationSettings) => {
+	const handleToggleSetting = (key: SpaceSettingKey) => {
 		setSettings((prev) => {
 			const nextValue = !prev[key];
 
@@ -307,6 +316,7 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 						for (const option of settingOptions) {
 							formData.append(option.value, String(settings[option.value]));
 						}
+						formData.append("audienceDomains", audienceDomains);
 
 						formData.append("passwordEnabled", String(passwordEnabled));
 						formData.append("public", String(publicEnabled));
@@ -465,8 +475,25 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 					<section className="space-y-3">
 						<SectionLabel
 							title="Sharing"
-							description="Control how this space can be reached."
+							description="Control who can receive videos shared to this space."
 						/>
+						<div className="space-y-2 rounded-xl border border-gray-4 bg-gray-1 p-3.5">
+							<div>
+								<Label htmlFor={audienceDomainsInputId}>Audience domains</Label>
+								<CardDescription>
+									People with these email domains can watch every cap shared to
+									this space. Separate domains with commas.
+								</CardDescription>
+							</div>
+							<Input
+								id={audienceDomainsInputId}
+								value={audienceDomains}
+								onChange={(event) => setAudienceDomains(event.target.value)}
+								placeholder="aibuildlab.com"
+								autoCapitalize="none"
+								autoCorrect="off"
+							/>
+						</div>
 						<div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start">
 							<PublicCollectionField
 								kind="space"
