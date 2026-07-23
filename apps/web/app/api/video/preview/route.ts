@@ -1,8 +1,13 @@
+import { db } from "@cap/database";
+import { videos } from "@cap/database/schema";
 import { provideOptionalAuth, Storage, Videos } from "@cap/web-backend";
 import { Video } from "@cap/web-domain";
+import { eq } from "drizzle-orm";
 import { Effect, Option } from "effect";
 import { type NextRequest, NextResponse } from "next/server";
 import { runPromise } from "@/lib/server";
+import { isCapCloud } from "@/lib/share-meta";
+import { decodeStorageVideo } from "@/lib/video-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +16,28 @@ const PREVIEW_GIF_EXPIRES_SECONDS = 60 * 60;
 function getPreviewGifKey(ownerId: string, videoId: string) {
 	return `${ownerId}/${videoId}/preview/animated-preview.gif`;
 }
+
+// Self-host serves the preview GIF even when the video itself is
+// access-gated (operator decision 2026-07-23) so chat unfurl cards keep
+// their image. Only the thumbnail is exposed; playback stays behind the
+// viewing policy.
+const policyFreePreviewUrl = (videoId: Video.VideoId) =>
+	Effect.gen(function* () {
+		const [row] = yield* Effect.tryPromise(() =>
+			db().select().from(videos).where(eq(videos.id, videoId)).limit(1),
+		);
+		if (!row) return null;
+		const [bucket] = yield* Storage.getAccessForVideo(decodeStorageVideo(row));
+		const previewKey = getPreviewGifKey(row.ownerId, row.id);
+		const hasPreview = yield* bucket.headObject(previewKey).pipe(
+			Effect.as(true),
+			Effect.catchAll(() => Effect.succeed(false)),
+		);
+		if (!hasPreview) return null;
+		return yield* bucket.getSignedObjectUrl(previewKey, {
+			expiresIn: PREVIEW_GIF_EXPIRES_SECONDS,
+		});
+	});
 
 function getFallbackResponse(request: NextRequest, videoId: string) {
 	if (request.nextUrl.searchParams.get("fallback") !== "og") {
@@ -53,6 +80,21 @@ export async function GET(request: NextRequest) {
 			});
 		}).pipe(provideOptionalAuth, runPromise);
 	} catch (error) {
+		if (!isCapCloud) {
+			try {
+				previewUrl = await policyFreePreviewUrl(videoId).pipe(runPromise);
+			} catch (fallbackError) {
+				console.warn(
+					"[video/preview] Policy-free preview lookup failed:",
+					fallbackError,
+				);
+				return new NextResponse(null, { status: 404 });
+			}
+			if (!previewUrl) return getFallbackResponse(request, rawVideoId);
+			const response = NextResponse.redirect(previewUrl, 302);
+			response.headers.set("Cache-Control", "public, max-age=300");
+			return response;
+		}
 		console.warn("[video/preview] Failed to resolve preview GIF:", error);
 		return new NextResponse(null, { status: 404 });
 	}

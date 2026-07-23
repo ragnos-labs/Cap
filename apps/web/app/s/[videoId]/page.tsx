@@ -54,6 +54,7 @@ import * as EffectRuntime from "@/lib/server";
 import { runPromise } from "@/lib/server";
 import { getSharePageBranding } from "@/lib/share-branding";
 import {
+	isCapCloud,
 	shareStateTitle,
 	shareVideoDescription,
 	shareVideoTitle,
@@ -315,8 +316,35 @@ export async function generateMetadata(
 			}),
 		),
 		Effect.catchTags({
+			// Self-host keeps social unfurl cards (title + preview image) for
+			// access-gated videos so chat links still render a card; playback
+			// stays behind the policy. Operator decision 2026-07-23.
 			PolicyDenied: () =>
-				Effect.succeed({
+				!isCapCloud && canRenderSocialPreview
+					? Effect.promise(async (): Promise<Metadata> => {
+							const [row] = await db()
+								.select({ name: videos.name })
+								.from(videos)
+								.where(eq(videos.id, videoId))
+								.limit(1);
+							const previewImageUrl = new URL(
+								`/api/video/preview?videoId=${videoId}&fallback=og`,
+								buildEnv.NEXT_PUBLIC_WEB_URL,
+							).toString();
+							return {
+								title: shareVideoTitle(row?.name ?? "Video"),
+								description: shareVideoDescription(),
+								openGraph: { images: [{ url: previewImageUrl }] },
+								twitter: {
+									card: "summary_large_image",
+									title: shareVideoTitle(row?.name ?? "Video"),
+									description: shareVideoDescription(),
+									images: [previewImageUrl],
+								},
+								robots: "noindex, nofollow",
+							};
+						})
+					: Effect.succeed({
 					title: shareStateTitle("This video is restricted"),
 					description: "This video has restricted access.",
 					openGraph: {
