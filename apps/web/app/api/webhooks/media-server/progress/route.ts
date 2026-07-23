@@ -1,12 +1,14 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { db } from "@cap/database";
-import { videos, videoUploads } from "@cap/database/schema";
+import { users, videos, videoUploads } from "@cap/database/schema";
 import { serverEnv } from "@cap/env";
 import type { Video } from "@cap/web-domain";
 import { eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { invalidateGoogleDriveStorageQuotaCache } from "@/lib/google-drive-storage-quota";
+import { transcribeVideo } from "@/lib/transcribe";
 import { isEditSourceKey } from "@/lib/video-edit-processing";
+import { isAiGenerationEnabled } from "@/utils/flags";
 
 interface ProgressWebhookPayload {
 	jobId: string;
@@ -149,6 +151,37 @@ export async function POST(request: NextRequest) {
 				await db()
 					.delete(videoUploads)
 					.where(eq(videoUploads.videoId, payload.videoId as Video.VideoId));
+
+				// Kick off transcription (and chained AI title/summary/chapters)
+				// as soon as processing completes instead of waiting for the
+				// first share-page view. transcribeVideo claims the video
+				// atomically, so racing the desktop finalize workflow or a
+				// concurrent page view is safe.
+				if (currentVideo) {
+					const [owner] = await db()
+						.select({
+							email: users.email,
+							stripeSubscriptionStatus: users.stripeSubscriptionStatus,
+							thirdPartyStripeSubscriptionId:
+								users.thirdPartyStripeSubscriptionId,
+						})
+						.from(users)
+						.where(eq(users.id, currentVideo.ownerId));
+					const aiGenerationEnabled = owner
+						? await isAiGenerationEnabled(owner)
+						: false;
+					transcribeVideo(
+						payload.videoId as Video.VideoId,
+						currentVideo.ownerId,
+						aiGenerationEnabled,
+					).catch((error) => {
+						console.error(
+							"[media-server-webhook] Failed to start transcription for video %s:",
+							payload.videoId,
+							error,
+						);
+					});
+				}
 			}
 			await invalidateGoogleDriveStorageQuotaCache(
 				currentVideo?.storageIntegrationId,
