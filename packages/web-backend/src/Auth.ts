@@ -1,5 +1,7 @@
 import { getServerSession } from "@cap/database/auth/auth-options";
+import { getAccountAccessMode } from "@cap/database/auth/domain-utils";
 import * as Db from "@cap/database/schema";
+import { serverEnv } from "@cap/env";
 import {
 	CurrentUser,
 	type DatabaseError,
@@ -83,6 +85,17 @@ export const HttpAuthMiddlewareLive = Layer.effect(
 						.pipe(Effect.map(([entry]) => Option.fromNullable(entry?.users)));
 				} else {
 					user = yield* getCurrentUser;
+				}
+
+				if (
+					authHeader &&
+					Option.isSome(user) &&
+					getAccountAccessMode(
+						user.value.email,
+						serverEnv().CAP_CREATOR_DOMAINS,
+					) === "viewer"
+				) {
+					return yield* Effect.fail(new HttpApiError.Unauthorized());
 				}
 
 				return yield* user.pipe(

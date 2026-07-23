@@ -1,3 +1,5 @@
+import { parseAllowedDomains } from "@cap/database/auth/domain-utils";
+
 export const spaceSettingKeys = [
 	"disableSummary",
 	"disableCaptions",
@@ -8,7 +10,9 @@ export const spaceSettingKeys = [
 ] as const;
 
 export type SpaceSettingKey = (typeof spaceSettingKeys)[number];
-export type SpaceSettings = Partial<Record<SpaceSettingKey, boolean>>;
+export type SpaceSettings = Partial<Record<SpaceSettingKey, boolean>> & {
+	audienceDomains?: string[];
+};
 
 export const proSpaceSettingKeys = [
 	"disableSummary",
@@ -17,9 +21,14 @@ export const proSpaceSettingKeys = [
 ] as const;
 
 export const getSpaceSettingsFromFormData = (formData: FormData) =>
-	Object.fromEntries(
-		spaceSettingKeys.map((key) => [key, formData.get(key) === "true"]),
-	) as Record<SpaceSettingKey, boolean>;
+	({
+		...Object.fromEntries(
+			spaceSettingKeys.map((key) => [key, formData.get(key) === "true"]),
+		),
+		audienceDomains: parseAllowedDomains(
+			String(formData.get("audienceDomains") ?? ""),
+		),
+	}) as Record<SpaceSettingKey, boolean> & { audienceDomains: string[] };
 
 export const hasProSpaceSettingsEnabled = (
 	settings: Record<SpaceSettingKey, boolean>,

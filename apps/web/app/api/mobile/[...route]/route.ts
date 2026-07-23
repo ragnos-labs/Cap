@@ -1,6 +1,9 @@
 import crypto from "node:crypto";
 import { authOptions } from "@cap/database/auth/auth-options";
-import { isEmailAllowedForSignup } from "@cap/database/auth/domain-utils";
+import {
+	getAccountAccessMode,
+	isEmailAllowedForSignup,
+} from "@cap/database/auth/domain-utils";
 import { hashPassword } from "@cap/database/crypto";
 import { sendEmail } from "@cap/database/emails/config";
 import { OTPEmail } from "@cap/database/emails/otp-email";
@@ -293,6 +296,12 @@ const ensureEmailSignInAllowed = Effect.fn("Mobile.ensureEmailSignInAllowed")(
 	function* (email: string) {
 		if (!emailPattern.test(email)) {
 			return yield* Effect.fail(new HttpApiError.BadRequest());
+		}
+
+		if (
+			getAccountAccessMode(email, serverEnv().CAP_CREATOR_DOMAINS) === "viewer"
+		) {
+			return yield* Effect.fail(new HttpApiError.Forbidden());
 		}
 
 		const allowedDomains = serverEnv().CAP_ALLOWED_SIGNUP_DOMAINS;
@@ -1229,6 +1238,7 @@ const ApiLive = HttpApiBuilder.api(Mobile.MobileApiContract).pipe(
 									);
 								}
 
+								yield* ensureEmailSignInAllowed(user.value.email);
 								const session = yield* createMobileApiKey(user.value.id);
 
 								if (urlParams.redirectUri) {

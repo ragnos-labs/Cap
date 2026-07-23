@@ -30,6 +30,10 @@ import { SignedImageUrl } from "@/components/SignedImageUrl";
 import { Tooltip } from "@/components/Tooltip";
 import { usePublicEnv } from "@/utils/public-env";
 
+type ShareSpaceSettings = Partial<Record<ViewerSettingKey, boolean>> & {
+	audienceDomains?: string[];
+};
+
 interface SharingDialogProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -41,7 +45,7 @@ interface SharingDialogProps {
 		iconUrl?: string | null;
 		organizationId: string;
 		isOrg?: boolean;
-		settings?: Partial<Record<ViewerSettingKey, boolean>> | null;
+		settings?: ShareSpaceSettings | null;
 		hasPassword?: boolean;
 	}[];
 	onSharingUpdated: (updatedSharedSpaces: string[]) => void;
@@ -572,7 +576,7 @@ const SpaceCard = ({
 		name: string;
 		iconUrl?: ImageUpload.ImageUrl | null;
 		organizationId: string;
-		settings?: Partial<Record<ViewerSettingKey, boolean>> | null;
+		settings?: ShareSpaceSettings | null;
 		hasPassword?: boolean;
 	};
 	selectedSpaces: Set<string>;
@@ -580,13 +584,16 @@ const SpaceCard = ({
 	isSharedViaOrganization?: boolean;
 }) => {
 	const isSelected = selectedSpaces.has(space.id);
+	const audienceLabel = space.settings?.audienceDomains?.join(", ");
 
 	return (
 		<Tooltip
 			content={
 				isSharedViaOrganization
 					? `${space.name} (shared via organization)`
-					: space.name
+					: audienceLabel
+						? `${space.name}: ${audienceLabel}`
+						: space.name
 			}
 		>
 			<button
@@ -610,6 +617,12 @@ const SpaceCard = ({
 				<p className="max-w-full text-xs truncate transition-colors duration-200 text-gray-10">
 					{space.name}
 				</p>
+				{audienceLabel && (
+					<div className="flex max-w-full items-center gap-1 text-[10px] text-blue-10">
+						<Globe2 className="size-2.5 shrink-0" />
+						<span className="truncate">{audienceLabel}</span>
+					</div>
+				)}
 				{space.hasPassword && (
 					<div className="absolute top-1 left-1 flex size-4 items-center justify-center rounded-full bg-amber-500 text-white">
 						<Lock size={10} />

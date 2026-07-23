@@ -6,7 +6,7 @@ import { buildEnv } from "@cap/env";
 // description is omitted entirely. Cap cloud keeps upstream branding.
 export const isCapCloud = Boolean(buildEnv.NEXT_PUBLIC_IS_CAP);
 
-export const brandName = isCapCloud ? "Cap" : "RAGnos";
+export const brandName = isCapCloud ? "Cap" : "RAGnos Labs";
 
 export const shareVideoTitle = (name: string) =>
 	isCapCloud ? `${name} | Cap Recording` : name;

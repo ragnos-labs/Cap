@@ -40,6 +40,12 @@ export type VideosPolicyDeps = {
 		passwordsForVideo: (
 			videoId: Video.VideoId,
 		) => Effect.Effect<readonly { password: string | null }[], DatabaseError>;
+		audiencesForVideo: (
+			videoId: Video.VideoId,
+		) => Effect.Effect<
+			readonly { id: string; name: string; domains: string[] }[],
+			DatabaseError
+		>;
 	};
 };
 
@@ -71,20 +77,31 @@ export function buildCanView(
 
 			if (Option.isSome(user)) {
 				const userId = user.value.id;
-				const [videoOrgShareMembership, videoSpaceShareMembership] =
-					yield* Effect.all([
-						orgsRepo
-							.membershipForVideo(userId, video.id)
-							.pipe(Effect.map(Array.get(0))),
-						spacesRepo.membershipForVideo(userId, video.id),
-					]);
+				const [
+					videoOrgShareMembership,
+					videoSpaceShareMembership,
+					videoSpaceAudiences,
+				] = yield* Effect.all([
+					orgsRepo
+						.membershipForVideo(userId, video.id)
+						.pipe(Effect.map(Array.get(0))),
+					spacesRepo.membershipForVideo(userId, video.id),
+					spacesRepo.audiencesForVideo(video.id),
+				]);
+				const audienceMatch = videoSpaceAudiences.some((audience) =>
+					isEmailAllowedByRestriction(
+						user.value.email,
+						audience.domains.join(","),
+					),
+				);
 
 				if (
 					Option.isSome(videoOrgShareMembership) ||
-					Option.isSome(videoSpaceShareMembership)
+					Option.isSome(videoSpaceShareMembership) ||
+					audienceMatch
 				) {
 					yield* Effect.log(
-						"Explicit org/space membership found. Access granted.",
+						"Explicit org, space, or domain audience access found. Access granted.",
 					);
 					yield* Video.verifyPasswordCandidates(video, passwordHashes);
 					return true;

@@ -1,6 +1,7 @@
+import { serverEnv } from "@cap/env";
 import { STRIPE_AVAILABLE, stripe } from "@cap/utils";
 import { type ImageUpload, Organisation, User } from "@cap/web-domain";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { MySql2Database } from "drizzle-orm/mysql2";
 import type { Adapter } from "next-auth/adapters";
 import type Stripe from "stripe";
@@ -14,6 +15,7 @@ import {
 	users,
 	verificationTokens,
 } from "../schema.ts";
+import { getAccountAccessMode } from "./domain-utils.ts";
 
 type CreateUserData = Parameters<NonNullable<Adapter["createUser"]>>[0];
 type LinkAccountData = Parameters<NonNullable<Adapter["linkAccount"]>>[0];
@@ -72,6 +74,11 @@ export function DrizzleAdapter(db: MySql2Database): Adapter {
 	return {
 		async createUser(userData: CreateUserData) {
 			const normalizedEmail = userData.email.toLowerCase();
+			const isViewer =
+				getAccountAccessMode(
+					normalizedEmail,
+					serverEnv().CAP_CREATOR_DOMAINS,
+				) === "viewer";
 			let userId = User.UserId.make(nanoId());
 			await db.transaction(async (tx) => {
 				const [existingUser] = await tx
@@ -121,10 +128,12 @@ export function DrizzleAdapter(db: MySql2Database): Adapter {
 					emailVerified: userData.emailVerified,
 					name: userData.name,
 					image: userData.image as ImageUpload.ImageUrlOrKey | null,
-					activeOrganizationId: Organisation.OrganisationId.make(""),
+					activeOrganizationId: isViewer
+						? sql`NULL`
+						: Organisation.OrganisationId.make(""),
 				});
 
-				if (pendingInvite) {
+				if (pendingInvite || isViewer) {
 					return;
 				}
 

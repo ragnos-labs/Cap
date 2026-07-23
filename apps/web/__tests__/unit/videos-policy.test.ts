@@ -46,6 +46,11 @@ function makeDeps(config: {
 	spacePasswords?: string[];
 	orgMembership?: boolean;
 	spaceMembership?: boolean;
+	spaceAudiences?: Array<{
+		id: string;
+		name: string;
+		domains: string[];
+	}>;
 	allowedEmailDomain?: Option.Option<string>;
 }): VideosPolicyDeps {
 	const {
@@ -54,6 +59,7 @@ function makeDeps(config: {
 		spacePasswords = [],
 		orgMembership = false,
 		spaceMembership = false,
+		spaceAudiences = [],
 		allowedEmailDomain = Option.none<string>(),
 	} = config;
 
@@ -78,6 +84,7 @@ function makeDeps(config: {
 				),
 			passwordsForVideo: () =>
 				Effect.succeed(spacePasswords.map((password) => ({ password }))),
+			audiencesForVideo: () => Effect.succeed(spaceAudiences),
 		},
 	};
 }
@@ -230,6 +237,63 @@ describe("VideosPolicy.canView", () => {
 			});
 
 			expect(await runCanView(deps, makeUser("bob@gmail.com"))).toBe("allowed");
+		});
+	});
+
+	describe("domain-backed space audiences", () => {
+		const allAibl = [
+			{
+				id: "space-aibl",
+				name: "All AIBL",
+				domains: ["aibuildlab.com"],
+			},
+		];
+
+		it("allows a matching audience viewer on a private video", async () => {
+			const deps = makeDeps({
+				video: makeVideo({ public: false }),
+				spaceAudiences: allAibl,
+			});
+
+			expect(await runCanView(deps, makeUser("viewer@aibuildlab.com"))).toBe(
+				"allowed",
+			);
+		});
+
+		it("allows a matching audience viewer despite the organization restriction", async () => {
+			const deps = makeDeps({
+				video: makeVideo({ public: true }),
+				spaceAudiences: allAibl,
+				allowedEmailDomain: Option.some("ragnos.io,plumwheel.com"),
+			});
+
+			expect(await runCanView(deps, makeUser("viewer@aibuildlab.com"))).toBe(
+				"allowed",
+			);
+		});
+
+		it("denies a non-matching viewer", async () => {
+			const deps = makeDeps({
+				video: makeVideo({ public: true }),
+				spaceAudiences: allAibl,
+				allowedEmailDomain: Option.some("ragnos.io,plumwheel.com"),
+			});
+
+			expect(await runCanView(deps, makeUser("outsider@example.com"))).toBe(
+				"denied",
+			);
+		});
+
+		it("still requires an inherited password for an audience viewer", async () => {
+			const deps = makeDeps({
+				video: makeVideo({ public: false }),
+				spaceAudiences: allAibl,
+				spacePasswords: ["space-hash"],
+			});
+
+			expect(await runCanView(deps, makeUser("viewer@aibuildlab.com"))).toBe(
+				"password",
+			);
 		});
 	});
 

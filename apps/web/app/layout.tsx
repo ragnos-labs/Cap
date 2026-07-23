@@ -41,7 +41,7 @@ const defaultFont = localFont({
 	preload: false,
 });
 
-// Self-hosted instances (NEXT_PUBLIC_IS_CAP unset) brand as RAGnos Video and
+// Self-hosted instances (NEXT_PUBLIC_IS_CAP unset) brand as RAGnos Labs Video and
 // resolve relative metadata against their own origin instead of cap.so.
 export const metadata: Metadata = buildEnv.NEXT_PUBLIC_IS_CAP
 	? {
@@ -60,7 +60,7 @@ export const metadata: Metadata = buildEnv.NEXT_PUBLIC_IS_CAP
 		}
 	: {
 			metadataBase: new URL(buildEnv.NEXT_PUBLIC_WEB_URL),
-			title: "RAGnos Video",
+			title: "RAGnos Labs Video",
 			description: "Screen recordings from RAGnos Labs.",
 		};
 

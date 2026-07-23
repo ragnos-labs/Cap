@@ -15,7 +15,7 @@ import {
 } from "@cap/database/schema";
 import type { VideoMetadata } from "@cap/database/types";
 import { buildEnv, serverEnv } from "@cap/env";
-import { Logo } from "@cap/ui";
+import { Button, Logo } from "@cap/ui";
 import { userIsPro } from "@cap/utils";
 import {
 	Database,
@@ -36,8 +36,8 @@ import { and, eq, type InferSelectModel, isNull, sql } from "drizzle-orm";
 import { Effect, Option } from "effect";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { SpaceSettings } from "@/actions/organization/space-settings";
 import { getVideoAnalytics } from "@/actions/videos/get-analytics";
 import {
 	getDashboardData,
@@ -73,6 +73,7 @@ import {
 	areEditSpecsEquivalent,
 	createIdentityEditSpec,
 } from "@/lib/video-edits";
+import { getRestrictedVideoLoginPath } from "@/lib/viewer-access";
 import { optionFromTOrFirst } from "@/utils/effect";
 import { isAiGenerationEnabled } from "@/utils/flags";
 import { PasswordOverlay } from "./_components/PasswordOverlay";
@@ -132,7 +133,7 @@ async function getSharedSpacesForVideo(videoId: Video.VideoId) {
 		name: string;
 		organizationId: string;
 		iconUrl?: string;
-		settings?: OrganizationSettings | null;
+		settings?: SpaceSettings | null;
 		hasPassword?: boolean;
 	}> = [];
 
@@ -163,24 +164,21 @@ async function getSharedSpacesForVideo(videoId: Video.VideoId) {
 	return sharedSpaces;
 }
 
-function PolicyDeniedView({ reason }: { reason?: string }) {
+function PolicyDeniedView({
+	videoId,
+	reason,
+}: {
+	videoId: Video.VideoId;
+	reason?: string;
+}) {
 	let title = "This video is private";
-	let description: React.ReactNode = (
-		<>
-			If you own this video, please <Link href="/login">sign in</Link> to manage
-			sharing.
-		</>
-	);
+	let description =
+		"If you own this video, sign in to manage its sharing settings.";
 
 	if (reason === "email_restriction_login_required") {
 		title = "This video requires sign-in";
-		description = (
-			<>
-				The owner of this video has restricted access. Please{" "}
-				<Link href="/login">sign in</Link> with an authorized email address to
-				view.
-			</>
-		);
+		description =
+			"The owner has restricted access. Sign in with an authorized email address to watch.";
 	} else if (reason === "email_restriction_denied") {
 		title = "Access restricted";
 		description =
@@ -189,15 +187,24 @@ function PolicyDeniedView({ reason }: { reason?: string }) {
 
 	return (
 		<div className="flex flex-col justify-center items-center p-4 min-h-screen text-center">
-			<Logo className="size-32" />
+			<Logo className="mb-16 h-16 w-auto" />
 			<h1 className="mb-2 text-2xl font-semibold">{title}</h1>
-			<p className="text-gray-400">{description}</p>
+			<p className="max-w-2xl text-gray-400">{description}</p>
+			<Button
+				className="mt-8"
+				href={getRestrictedVideoLoginPath(videoId)}
+				variant="primary"
+			>
+				Sign in to watch
+			</Button>
 		</div>
 	);
 }
 
 const renderPolicyDenied = (videoId: Video.VideoId, reason?: string) =>
-	Effect.succeed(<PolicyDeniedView key={videoId} reason={reason} />);
+	Effect.succeed(
+		<PolicyDeniedView key={videoId} videoId={videoId} reason={reason} />,
+	);
 
 const renderNoSuchElement = (awaitRecording: boolean) =>
 	awaitRecording
@@ -345,37 +352,37 @@ export async function generateMetadata(
 							};
 						})
 					: Effect.succeed({
-					title: shareStateTitle("This video is restricted"),
-					description: "This video has restricted access.",
-					openGraph: {
-						images: [
-							{
-								url: new URL(
-									`/api/video/og?videoId=${videoId}`,
-									buildEnv.NEXT_PUBLIC_WEB_URL,
-								).toString(),
-								width: 1200,
-								height: 630,
+							title: shareStateTitle("This video is restricted"),
+							description: "This video has restricted access.",
+							openGraph: {
+								images: [
+									{
+										url: new URL(
+											`/api/video/og?videoId=${videoId}`,
+											buildEnv.NEXT_PUBLIC_WEB_URL,
+										).toString(),
+										width: 1200,
+										height: 630,
+									},
+								],
+								...(serverEnv().OG_VIDEO_DISABLED === "true"
+									? {}
+									: {
+											videos: [
+												{
+													url: new URL(
+														`/api/playlist?videoId=${videoId}`,
+														buildEnv.NEXT_PUBLIC_WEB_URL,
+													).toString(),
+													width: 1280,
+													height: 720,
+													type: "video/mp4",
+												},
+											],
+										}),
 							},
-						],
-						...(serverEnv().OG_VIDEO_DISABLED === "true"
-							? {}
-							: {
-									videos: [
-										{
-											url: new URL(
-												`/api/playlist?videoId=${videoId}`,
-												buildEnv.NEXT_PUBLIC_WEB_URL,
-											).toString(),
-											width: 1280,
-											height: 720,
-											type: "video/mp4",
-										},
-									],
-								}),
-					},
-					robots: "noindex, nofollow",
-				}),
+							robots: "noindex, nofollow",
+						}),
 			VerifyVideoPasswordError: () =>
 				Effect.succeed({
 					title: shareStateTitle("Password Protected Video"),
