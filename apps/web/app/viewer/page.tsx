@@ -2,6 +2,8 @@ import { getServerSession } from "@cap/database/auth/auth-options";
 import { Button, Logo } from "@cap/ui";
 import { redirect } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default async function ViewerHomePage() {
 	const session = await getServerSession();
 	if (!session?.user) {
