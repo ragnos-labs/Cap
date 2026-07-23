@@ -54,6 +54,11 @@ import * as EffectRuntime from "@/lib/server";
 import { runPromise } from "@/lib/server";
 import { getSharePageBranding } from "@/lib/share-branding";
 import {
+	shareStateTitle,
+	shareVideoDescription,
+	shareVideoTitle,
+} from "@/lib/share-meta";
+import {
 	isSocialCrawlerUserAgent,
 	SOCIAL_REFERRER_DOMAINS,
 } from "@/lib/social-crawlers";
@@ -232,7 +237,7 @@ export async function generateMetadata(
 				onNone: () =>
 					awaitRecording
 						? {
-								title: "Cap: Preparing Video",
+								title: shareStateTitle("Preparing Video"),
 								description: "This recording is being made available.",
 								robots: "noindex, nofollow",
 							}
@@ -263,8 +268,8 @@ export async function generateMetadata(
 					const previewImages = [{ url: previewImageUrl }];
 
 					return {
-						title: `${video.name} | Cap Recording`,
-						description: "Watch this video on Cap",
+						title: shareVideoTitle(video.name),
+						description: shareVideoDescription(),
 						openGraph: {
 							images: previewImages,
 							...(ogVideoDisabled
@@ -283,14 +288,14 @@ export async function generateMetadata(
 						twitter: ogVideoDisabled
 							? {
 									card: "summary_large_image",
-									title: `${video.name} | Cap Recording`,
-									description: "Watch this video on Cap",
+									title: shareVideoTitle(video.name),
+									description: shareVideoDescription(),
 									images: previewImages,
 								}
 							: {
 									card: "player",
-									title: `${video.name} | Cap Recording`,
-									description: "Watch this video on Cap",
+									title: shareVideoTitle(video.name),
+									description: shareVideoDescription(),
 									images: previewImages,
 									players: {
 										playerUrl: new URL(
@@ -312,7 +317,7 @@ export async function generateMetadata(
 		Effect.catchTags({
 			PolicyDenied: () =>
 				Effect.succeed({
-					title: "Cap: This video is restricted",
+					title: shareStateTitle("This video is restricted"),
 					description: "This video has restricted access.",
 					openGraph: {
 						images: [
@@ -345,7 +350,7 @@ export async function generateMetadata(
 				}),
 			VerifyVideoPasswordError: () =>
 				Effect.succeed({
-					title: "Cap: Password Protected Video",
+					title: shareStateTitle("Password Protected Video"),
 					description: "This video is password protected.",
 					openGraph: {
 						images: [
@@ -361,7 +366,7 @@ export async function generateMetadata(
 					},
 					twitter: {
 						card: "summary_large_image",
-						title: "Cap: Password Protected Video",
+						title: shareStateTitle("Password Protected Video"),
 						description: "This video is password protected.",
 						images: [
 							new URL(

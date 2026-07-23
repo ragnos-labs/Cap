@@ -24,6 +24,11 @@ import { Effect, Option } from "effect";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+	shareStateTitle,
+	shareVideoDescription,
+	shareVideoTitle,
+} from "@/lib/share-meta";
 import * as EffectRuntime from "@/lib/server";
 import { transcribeVideo } from "@/lib/transcribe";
 import { isAiGenerationEnabled } from "@/utils/flags";
@@ -41,8 +46,8 @@ export async function generateMetadata(
 			Option.match({
 				onNone: () => notFound(),
 				onSome: ([video]) => ({
-					title: `${video.name} | Cap Recording`,
-					description: "Watch this video on Cap",
+					title: shareVideoTitle(video.name),
+					description: shareVideoDescription(),
 					openGraph: {
 						images: [
 							{
@@ -68,8 +73,8 @@ export async function generateMetadata(
 					},
 					twitter: {
 						card: "player",
-						title: `${video.name} | Cap Recording`,
-						description: "Watch this video on Cap",
+						title: shareVideoTitle(video.name),
+						description: shareVideoDescription(),
 						images: [
 							new URL(
 								`/api/video/og?videoId=${videoId}`,
@@ -96,13 +101,13 @@ export async function generateMetadata(
 		Effect.catchTags({
 			PolicyDenied: () =>
 				Effect.succeed({
-					title: "Cap: This video is private",
+					title: shareStateTitle("This video is private"),
 					description: "This video is private and cannot be shared.",
 					robots: "noindex, nofollow",
 				}),
 			VerifyVideoPasswordError: () =>
 				Effect.succeed({
-					title: "Cap: Password Protected Video",
+					title: shareStateTitle("Password Protected Video"),
 					description: "This video is password protected.",
 					robots: "noindex, nofollow",
 				}),
