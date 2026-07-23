@@ -1478,3 +1478,29 @@ export const developerDailyStorageSnapshotsRelations = relations(
 		}),
 	}),
 );
+
+// Self-host view tracking: stores share-page view events in MySQL when no
+// Tinybird workspace is configured (see apps/web/lib/video-views.ts). One row
+// per tracked page hit; view counts aggregate over distinct sessionId.
+export const videoPageViews = mysqlTable(
+	"video_page_views",
+	{
+		id: bigint("id", { mode: "number" }).autoincrement().primaryKey(),
+		videoId: nanoId("videoId").notNull().$type<Video.VideoId>(),
+		orgId: nanoIdNullable("orgId").$type<Organisation.OrganisationId>(),
+		sessionId: varchar("sessionId", { length: 128 }).notNull(),
+		userId: nanoIdNullable("userId").$type<User.UserId>(),
+		pathname: varchar("pathname", { length: 255 }),
+		country: varchar("country", { length: 64 }),
+		region: varchar("region", { length: 64 }),
+		city: varchar("city", { length: 128 }),
+		browser: varchar("browser", { length: 64 }),
+		device: varchar("device", { length: 64 }),
+		os: varchar("os", { length: 64 }),
+		timestamp: timestamp("timestamp").notNull().defaultNow(),
+	},
+	(table) => [
+		index("video_id_timestamp_idx").on(table.videoId, table.timestamp),
+		index("video_id_session_idx").on(table.videoId, table.sessionId),
+	],
+);
