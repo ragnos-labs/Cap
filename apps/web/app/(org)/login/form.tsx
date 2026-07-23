@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, LogoBadge } from "@cap/ui";
+import { Button, Input, Logo } from "@cap/ui";
 import { Organisation } from "@cap/web-domain";
 import {
 	faArrowLeft,
@@ -26,12 +26,13 @@ import {
 import { toast } from "sonner";
 import { getOrganizationSSOData } from "@/actions/organization/get-organization-sso-data";
 import { trackEvent } from "@/app/utils/analytics";
+import { brandName, isCapCloud } from "@/lib/share-meta";
 import { usePublicEnv } from "@/utils/public-env";
 import { getEmailCodeCooldownSeconds, requestEmailCode } from "../auth-email";
 import { getSafeNextPath } from "../safe-next";
 
 const MotionInput = motion(Input);
-const MotionLogoBadge = motion(LogoBadge);
+const MotionLogo = motion(Logo);
 const MotionLink = motion(Link);
 const MotionButton = motion(Button);
 
@@ -219,7 +220,7 @@ export function LoginForm() {
 				</motion.p>
 			</motion.div>
 			<MotionLink layout="position" className="flex mx-auto size-fit" href="/">
-				<MotionLogoBadge layout="position" className="size-12" />
+				<MotionLogo layout="position" className="h-12 w-auto" />
 			</MotionLink>
 			<motion.div
 				layout="position"
@@ -230,14 +231,16 @@ export function LoginForm() {
 					layout="position"
 					className="text-2xl font-semibold text-gray-12"
 				>
-					Sign in to Cap
+					Sign in to {brandName}
 				</motion.h1>
 				<motion.p
 					key="subtitle"
 					layout="position"
 					className="text-[16px] text-gray-10"
 				>
-					Beautiful screen recordings, owned by you.
+					{isCapCloud
+						? "Beautiful screen recordings, owned by you."
+						: "Secure video sharing from RAGnos Labs."}
 				</motion.p>
 			</motion.div>
 			<motion.div layout="position" className="flex flex-col space-y-3">
@@ -364,7 +367,7 @@ export function LoginForm() {
 							className="pt-3 text-xs text-center text-gray-9"
 						>
 							By typing your email and clicking continue, you acknowledge that
-							you have both read and agree to Cap's{" "}
+							you have both read and agree to {brandName}'s{" "}
 							<Link
 								href="/terms"
 								target="_blank"

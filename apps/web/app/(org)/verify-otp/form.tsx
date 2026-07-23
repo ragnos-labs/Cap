@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, LogoBadge } from "@cap/ui";
+import { Button, Logo } from "@cap/ui";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMutation } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { brandName } from "@/lib/share-meta";
 import { getSafeNextPath } from "../safe-next";
 
 export function VerifyOTPForm({
@@ -164,7 +165,7 @@ export function VerifyOTPForm({
 			</Link>
 
 			<Link className="flex mx-auto size-fit" href="/">
-				<LogoBadge className="size-12" />
+				<Logo className="h-12 w-auto" />
 			</Link>
 
 			<div className="flex flex-col justify-center items-center my-7 text-center">
@@ -230,7 +231,7 @@ export function VerifyOTPForm({
 
 			<p className="mt-6 text-xs text-center text-gray-9">
 				By entering your email, you acknowledge that you have both read and
-				agree to Cap's{" "}
+				agree to {brandName}'s{" "}
 				<Link
 					href="/terms"
 					target="_blank"
