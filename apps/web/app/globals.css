@@ -885,6 +885,17 @@ footer a {
 }
 
 @media (prefers-reduced-motion: reduce) {
+	/* Respect the operating system preference across the full web app.
+	 * Keep state changes immediate while avoiding decorative movement. */
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+
 	.ai-title-skeleton {
 		display: none;
 	}
